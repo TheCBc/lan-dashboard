@@ -4,9 +4,15 @@ Esegui il comando per scaricare ed eseguire lo script di installazione direttame
 
 
 
-bash <(curl -s https://raw.githubusercontent.com/TheCBc/lan-dashboard/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/TheCBc/lan-dashboard/main/install_app.sh)
 
 
 Lo script farà tutto in autonomia: installerà Python, scaricherà il codice dal tuo repository,
 installerà le librerie necessarie (flask, zeroconf, ecc.) e configurerà un demone di sistema (systemd) 
 che terrà la dashboard sempre accesa in background, riavviandola automaticamente anche se riavvii il container LXC.
+
+
+
+Accedi alla console di proxmox e esegui il comando per creare e installare il container minimal e la dash
+
+bash <(curl -s https://raw.githubusercontent.com/TheCBc/lan-dashboard/main/install.sh)
