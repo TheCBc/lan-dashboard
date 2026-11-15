@@ -1,0 +1,12 @@
+Accedi alla shell del tuo container LXC (direttamente dall'interfaccia web di Proxmox cliccando sul container -> Shell, oppure via SSH).
+
+Esegui il comando per scaricare ed eseguire lo script di installazione direttamente da GitHub (sostituendo l'URL con il link Raw del tuo file install.sh su GitHub):
+
+
+
+bash <(curl -s https://raw.githubusercontent.com/TheCBc/lan-dashboard/main/install.sh)
+
+
+Lo script farà tutto in autonomia: installerà Python, scaricherà il codice dal tuo repository,
+installerà le librerie necessarie (flask, zeroconf, ecc.) e configurerà un demone di sistema (systemd) 
+che terrà la dashboard sempre accesa in background, riavviandola automaticamente anche se riavvii il container LXC.
