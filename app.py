@@ -2,6 +2,7 @@
 """
 LAN Dashboard - Ultra-lightweight self-hosted dashboard for Linux LXC.
 Single-file backend with Flask and Python standard libraries + zeroconf.
+Supports categories, drag-and-drop ordering, and bulk multi-device import.
 """
 
 import os
@@ -31,6 +32,21 @@ DATA_FILE = os.path.join(BASE_DIR, 'links.json')
 
 DEFAULT_DATA = {
     "title": "LAN Dashboard",
+    "root_order": ["cat:Infrastruttura", "cat:Domotica"],
+    "categories": [
+        {
+            "id": "cat-1",
+            "name": "Domotica",
+            "icon": "home",
+            "color": "#06b6d4"
+        },
+        {
+            "id": "cat-2",
+            "name": "Infrastruttura",
+            "icon": "server",
+            "color": "#3b82f6"
+        }
+    ],
     "services": [
         {
             "id": "srv-1",
@@ -39,7 +55,8 @@ DEFAULT_DATA = {
             "subtitle": "192.168.1.1",
             "icon": "router",
             "color": "#3b82f6",
-            "new_tab": True
+            "new_tab": True,
+            "category": "Infrastruttura"
         },
         {
             "id": "srv-2",
@@ -48,7 +65,8 @@ DEFAULT_DATA = {
             "subtitle": "AdBlocker & DNS Local",
             "icon": "shield",
             "color": "#10b981",
-            "new_tab": True
+            "new_tab": True,
+            "category": "Infrastruttura"
         },
         {
             "id": "srv-3",
@@ -57,14 +75,15 @@ DEFAULT_DATA = {
             "subtitle": "Domotica & IoT Hub",
             "icon": "home",
             "color": "#06b6d4",
-            "new_tab": True
+            "new_tab": True,
+            "category": "Domotica"
         }
     ]
 }
 
 
 def load_data():
-    """Load configuration from links.json, creating it if it doesn't exist."""
+    """Load configuration from links.json with full backward compatibility."""
     if not os.path.exists(DATA_FILE):
         save_data(DEFAULT_DATA)
         return DEFAULT_DATA.copy()
@@ -72,11 +91,46 @@ def load_data():
         with open(DATA_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
             if isinstance(data, list):
-                data = {"title": "LAN Dashboard", "services": data}
+                data = {"title": "LAN Dashboard", "services": data, "categories": [], "root_order": []}
             if "title" not in data:
                 data["title"] = "LAN Dashboard"
             if "services" not in data or not isinstance(data["services"], list):
                 data["services"] = []
+            if "categories" not in data or not isinstance(data["categories"], list):
+                data["categories"] = []
+
+            # Auto-register any category used in services if missing from categories list
+            existing_cats = {c.get('name') for c in data["categories"] if c.get('name')}
+            for s in data["services"]:
+                c_name = (s.get('category') or '').strip()
+                if c_name and c_name not in existing_cats:
+                    data["categories"].append({
+                        "id": f"cat-{str(uuid.uuid4())[:8]}",
+                        "name": c_name,
+                        "icon": "folder",
+                        "color": "#8b5cf6"
+                    })
+                    existing_cats.add(c_name)
+
+            # Ensure root_order exists and contains all root items and categories
+            if "root_order" not in data or not isinstance(data["root_order"], list):
+                data["root_order"] = []
+
+            known_keys = set(data["root_order"])
+            # Add any categories not yet in root_order
+            for c in data["categories"]:
+                key = f"cat:{c['name']}"
+                if key not in known_keys:
+                    data["root_order"].append(key)
+                    known_keys.add(key)
+            # Add any root services not yet in root_order
+            for s in data["services"]:
+                if not (s.get("category") or "").strip():
+                    sid = s.get("id")
+                    if sid and sid not in known_keys:
+                        data["root_order"].append(sid)
+                        known_keys.add(sid)
+
             return data
     except Exception as e:
         print(f"[WARN] Error loading {DATA_FILE}: {e}")
@@ -92,12 +146,7 @@ def save_data(data):
 
 
 def check_host_health(url, timeout=1.5):
-    """
-    Check if a URL/host is reachable:
-    1. HTTP/HTTPS GET request with unverified SSL (supports self-signed certificates).
-    2. Fallback to raw TCP socket connection to the target port.
-    Returns: {'online': bool, 'latency_ms': int, 'detail': str}
-    """
+    """Check if a URL/host is reachable via HTTP or TCP socket."""
     t_start = time.time()
     url_clean = (url or "").strip()
     if not url_clean:
@@ -119,7 +168,7 @@ def check_host_health(url, timeout=1.5):
     if not hostname:
         return {'online': False, 'latency_ms': None, 'detail': 'Invalid hostname'}
 
-    # 1. HTTP/HTTPS Check (ignores invalid / self-signed SSL certs)
+    # 1. HTTP/HTTPS Check
     try:
         ctx = ssl._create_unverified_context()
         ctx.check_hostname = False
@@ -142,22 +191,21 @@ def check_host_health(url, timeout=1.5):
     except Exception:
         pass
 
-    # 2. TCP Socket Fallback
+    # 2. Fallback TCP Socket
     try:
         t_sock = time.time()
         with socket.create_connection((hostname, port), timeout=timeout):
             latency = int((time.time() - t_sock) * 1000)
             return {'online': True, 'latency_ms': latency, 'detail': f'TCP Port {port} Open'}
-    except Exception as e:
+    except Exception:
         return {'online': False, 'latency_ms': None, 'detail': 'Unreachable / Timeout'}
 
 
 # ==========================================
-# LAN SCANNER HELPERS (mDNS + TCP Port Scan)
+# LAN SCANNER (mDNS + TCP Port Scan)
 # ==========================================
 
 def get_local_subnet_ips():
-    """Detect local IP and return list of /24 subnet IPs."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('1.1.1.1', 80))
@@ -177,7 +225,6 @@ def get_local_subnet_ips():
 
 
 class MDNSServiceCollector:
-    """Listener for mDNS service discovery."""
     def __init__(self):
         self.found = []
 
@@ -197,15 +244,11 @@ class MDNSServiceCollector:
         except Exception:
             pass
 
-    def update_service(self, zc, type_, name):
-        pass
-
-    def remove_service(self, zc, type_, name):
-        pass
+    def update_service(self, zc, type_, name): pass
+    def remove_service(self, zc, type_, name): pass
 
 
 def probe_http_title(url):
-    """Quickly grab <title> from web server if available."""
     try:
         ctx = ssl._create_unverified_context()
         ctx.check_hostname = False
@@ -216,18 +259,13 @@ def probe_http_title(url):
             m = re.search(r'<title>(.*?)</title>', content, re.I | re.S)
             if m:
                 clean = re.sub(r'\s+', ' ', m.group(1)).strip()
-                if clean:
-                    return clean
+                if clean: return clean
     except Exception:
         pass
     return None
 
 
 def run_lan_scan():
-    """
-    Executes fast mDNS discovery and parallel subnet port scan.
-    Returns deduplicated list of discovered LAN devices.
-    """
     collector = MDNSServiceCollector()
     zc = None
     if HAS_ZEROCONF:
@@ -240,9 +278,8 @@ def run_lan_scan():
             ]
             browser = ServiceBrowser(zc, services, collector)
         except Exception as e:
-            print(f"[WARN] Zeroconf start error: {e}")
+            print(f"[WARN] Zeroconf error: {e}")
 
-    # Subnet Port Scan (80, 443, 8123, 8006, 8080)
     hosts = get_local_subnet_ips()
     ports = [80, 443, 8123, 8006, 8080]
     targets = [(h, p) for h in hosts for p in ports]
@@ -259,28 +296,22 @@ def run_lan_scan():
             s.close()
             return None
 
-    # Scan open ports in parallel
     with ThreadPoolExecutor(max_workers=80) as ex:
         open_ports = list(filter(None, ex.map(_scan_target, targets)))
 
-    # Allow mDNS brief time to complete packet collection
     if HAS_ZEROCONF and zc:
         time.sleep(1.0)
-        try:
-            zc.close()
-        except Exception:
-            pass
+        try: zc.close()
+        except Exception: pass
 
     results = []
     seen_endpoints = set()
 
-    # 1. Process mDNS results (highest name fidelity)
     for item in collector.found:
         ip = item['ip']
         port = item['port']
         endpoint = f"{ip}:{port}"
-        if endpoint in seen_endpoints:
-            continue
+        if endpoint in seen_endpoints: continue
         seen_endpoints.add(endpoint)
 
         proto = 'https' if port in (443, 8006) else 'http'
@@ -308,11 +339,9 @@ def run_lan_scan():
             'source': 'mDNS'
         })
 
-    # 2. Process TCP open ports
     for ip, port in open_ports:
         endpoint = f"{ip}:{port}"
-        if endpoint in seen_endpoints:
-            continue
+        if endpoint in seen_endpoints: continue
         seen_endpoints.add(endpoint)
 
         proto = 'https' if port in (443, 8006) else 'http'
@@ -335,21 +364,13 @@ def run_lan_scan():
             icon = 'router'
             color = '#3b82f6'
 
-        # Try HTML title
-        if not name:
-            name = probe_http_title(url)
-
-        # Try reverse DNS
+        if not name: name = probe_http_title(url)
         if not name:
             try:
                 h, _, _ = socket.gethostbyaddr(ip)
-                if h:
-                    name = h.split('.')[0].replace('-', ' ').title()
-            except Exception:
-                pass
-
-        if not name:
-            name = f"Dispositivo ({ip}:{port})"
+                if h: name = h.split('.')[0].replace('-', ' ').title()
+            except Exception: pass
+        if not name: name = f"Dispositivo ({ip}:{port})"
 
         results.append({
             'name': name,
@@ -369,28 +390,48 @@ def run_lan_scan():
 
 @app.route('/')
 def index():
-    """Render the dashboard page with initial data preloaded."""
     data = load_data()
-    return render_template('index.html', title=data.get('title', 'LAN Dashboard'), services=data.get('services', []))
+    return render_template(
+        'index.html',
+        title=data.get('title', 'LAN Dashboard'),
+        services=data.get('services', []),
+        categories=data.get('categories', []),
+        root_order=data.get('root_order', [])
+    )
 
 
 @app.route('/api/links', methods=['GET'])
 def get_links():
-    """Get all configured services and dashboard title."""
     return jsonify(load_data())
 
 
 @app.route('/api/links', methods=['POST'])
 def add_link():
-    """Add a new service card."""
+    """Aggiunge un singolo servizio supportando l'assegnazione a una cartella."""
     payload = request.get_json(force=True, silent=True) or {}
     name = (payload.get('name') or '').strip()
     url = (payload.get('url') or '').strip()
+    category = (payload.get('category') or '').strip() or None
     
     if not name or not url:
         return jsonify({'error': 'Name and URL are required'}), 400
 
     data = load_data()
+    
+    # Registra la categoria se nuova
+    if category:
+        existing_cats = {c.get('name') for c in data["categories"]}
+        if category not in existing_cats:
+            data["categories"].append({
+                "id": f"cat-{str(uuid.uuid4())[:8]}",
+                "name": category,
+                "icon": "folder",
+                "color": "#8b5cf6"
+            })
+            cat_key = f"cat:{category}"
+            if cat_key not in data["root_order"]:
+                data["root_order"].append(cat_key)
+
     new_id = f"srv-{str(uuid.uuid4())[:8]}"
     new_item = {
         "id": new_id,
@@ -399,16 +440,88 @@ def add_link():
         "subtitle": (payload.get('subtitle') or '').strip() or url,
         "icon": (payload.get('icon') or 'globe').strip(),
         "color": (payload.get('color') or '#3b82f6').strip(),
-        "new_tab": bool(payload.get('new_tab', True))
+        "new_tab": bool(payload.get('new_tab', True)),
+        "category": category
     }
     data["services"].append(new_item)
+
+    # Se aggiunto alla Home (senza categoria), inseriscilo in root_order
+    if not category and new_id not in data["root_order"]:
+        data["root_order"].append(new_id)
+
     save_data(data)
-    return jsonify({'success': True, 'item': new_item}), 201
+    return jsonify({
+        'success': True,
+        'item': new_item,
+        'categories': data["categories"],
+        'root_order': data["root_order"]
+    }), 201
+
+
+@app.route('/api/links/bulk', methods=['POST'])
+def add_links_bulk():
+    """Importa più dispositivi in blocco con un salvataggio atomico."""
+    payload = request.get_json(force=True, silent=True) or {}
+    items = payload.get('items', [])
+    target_category = (payload.get('category') or '').strip() or None
+
+    if not isinstance(items, list) or not items:
+        return jsonify({'error': 'No items provided'}), 400
+
+    data = load_data()
+
+    if target_category:
+        existing_cats = {c.get('name') for c in data["categories"]}
+        if target_category not in existing_cats:
+            data["categories"].append({
+                "id": f"cat-{str(uuid.uuid4())[:8]}",
+                "name": target_category,
+                "icon": "folder",
+                "color": "#8b5cf6"
+            })
+            cat_key = f"cat:{target_category}"
+            if cat_key not in data["root_order"]:
+                data["root_order"].append(cat_key)
+
+    added_items = []
+    for item in items:
+        name = (item.get('name') or '').strip()
+        url = (item.get('url') or '').strip()
+        if not name or not url:
+            continue
+        
+        cat = (item.get('category') or '').strip() or target_category
+        new_id = f"srv-{str(uuid.uuid4())[:8]}"
+
+        new_item = {
+            "id": new_id,
+            "name": name,
+            "url": url,
+            "subtitle": (item.get('subtitle') or '').strip() or url,
+            "icon": (item.get('icon') or 'globe').strip(),
+            "color": (item.get('color') or '#3b82f6').strip(),
+            "new_tab": bool(item.get('new_tab', True)),
+            "category": cat
+        }
+        data["services"].append(new_item)
+        added_items.append(new_item)
+
+        if not cat and new_id not in data["root_order"]:
+            data["root_order"].append(new_id)
+
+    save_data(data)
+    return jsonify({
+        'success': True,
+        'added_count': len(added_items),
+        'items': added_items,
+        'categories': data["categories"],
+        'root_order': data["root_order"]
+    }), 201
 
 
 @app.route('/api/links/<link_id>', methods=['PUT'])
 def update_link(link_id):
-    """Update an existing service card."""
+    """Modifica un servizio esistente (incluso cambio categoria/spostamento)."""
     payload = request.get_json(force=True, silent=True) or {}
     data = load_data()
     item = next((s for s in data["services"] if s.get('id') == link_id), None)
@@ -416,30 +529,54 @@ def update_link(link_id):
     if not item:
         return jsonify({'error': 'Service not found'}), 404
 
+    old_category = item.get('category')
+
     if 'name' in payload:
         name = payload['name'].strip()
-        if name:
-            item['name'] = name
+        if name: item['name'] = name
     if 'url' in payload:
         url = payload['url'].strip()
-        if url:
-            item['url'] = url
-    if 'subtitle' in payload:
-        item['subtitle'] = payload['subtitle'].strip()
-    if 'icon' in payload:
-        item['icon'] = payload['icon'].strip()
-    if 'color' in payload:
-        item['color'] = payload['color'].strip()
-    if 'new_tab' in payload:
-        item['new_tab'] = bool(payload['new_tab'])
+        if url: item['url'] = url
+    if 'subtitle' in payload: item['subtitle'] = payload['subtitle'].strip()
+    if 'icon' in payload: item['icon'] = payload['icon'].strip()
+    if 'color' in payload: item['color'] = payload['color'].strip()
+    if 'new_tab' in payload: item['new_tab'] = bool(payload['new_tab'])
+    
+    if 'category' in payload:
+        cat = (payload['category'] or '').strip() or None
+        item['category'] = cat
+
+        if cat:
+            existing_cats = {c.get('name') for c in data["categories"]}
+            if cat not in existing_cats:
+                data["categories"].append({
+                    "id": f"cat-{str(uuid.uuid4())[:8]}",
+                    "name": cat,
+                    "icon": "folder",
+                    "color": "#8b5cf6"
+                })
+                cat_key = f"cat:{cat}"
+                if cat_key not in data["root_order"]:
+                    data["root_order"].append(cat_key)
+            # Se spostato dentro una cartella, toglilo da root_order
+            if link_id in data["root_order"]:
+                data["root_order"].remove(link_id)
+        else:
+            # Se spostato nella Home, assicurati sia in root_order
+            if link_id not in data["root_order"]:
+                data["root_order"].append(link_id)
 
     save_data(data)
-    return jsonify({'success': True, 'item': item})
+    return jsonify({
+        'success': True,
+        'item': item,
+        'categories': data["categories"],
+        'root_order': data["root_order"]
+    })
 
 
 @app.route('/api/links/<link_id>', methods=['DELETE'])
 def delete_link(link_id):
-    """Delete a service card."""
     data = load_data()
     initial_len = len(data["services"])
     data["services"] = [s for s in data["services"] if s.get('id') != link_id]
@@ -447,13 +584,30 @@ def delete_link(link_id):
     if len(data["services"]) == initial_len:
         return jsonify({'error': 'Service not found'}), 404
 
+    if link_id in data.get("root_order", []):
+        data["root_order"].remove(link_id)
+
     save_data(data)
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'root_order': data["root_order"]})
+
+
+@app.route('/api/layout/reorder', methods=['POST'])
+def reorder_layout():
+    """Salva il nuovo ordine della griglia principale (cartelle e pulsanti root)."""
+    payload = request.get_json(force=True, silent=True) or {}
+    order = payload.get('order', [])
+    if not isinstance(order, list):
+        return jsonify({'error': 'Invalid order list'}), 400
+
+    data = load_data()
+    data['root_order'] = order
+    save_data(data)
+    return jsonify({'success': True, 'root_order': data['root_order']})
 
 
 @app.route('/api/links/reorder', methods=['POST'])
 def reorder_links():
-    """Reorder services based on an array of IDs."""
+    """Riordina l'array generale dei servizi."""
     payload = request.get_json(force=True, silent=True) or {}
     order = payload.get('order', [])
     if not isinstance(order, list):
@@ -473,9 +627,97 @@ def reorder_links():
     return jsonify({'success': True, 'services': data["services"]})
 
 
+# ==========================================
+# CATEGORIES API
+# ==========================================
+
+@app.route('/api/categories', methods=['GET'])
+def get_categories():
+    data = load_data()
+    return jsonify({'categories': data.get('categories', [])})
+
+
+@app.route('/api/categories', methods=['POST'])
+def create_or_update_category():
+    payload = request.get_json(force=True, silent=True) or {}
+    name = (payload.get('name') or '').strip()
+    old_name = (payload.get('old_name') or '').strip()
+    icon = (payload.get('icon') or 'folder').strip()
+    color = (payload.get('color') or '#8b5cf6').strip()
+
+    if not name:
+        return jsonify({'error': 'Category name is required'}), 400
+
+    data = load_data()
+    
+    if old_name:
+        for c in data["categories"]:
+            if c.get('name') == old_name:
+                c['name'] = name
+                c['icon'] = icon
+                c['color'] = color
+        for s in data["services"]:
+            if s.get('category') == old_name:
+                s['category'] = name
+        # Aggiorna anche in root_order
+        old_key = f"cat:{old_name}"
+        new_key = f"cat:{name}"
+        if old_key in data["root_order"]:
+            idx = data["root_order"].index(old_key)
+            data["root_order"][idx] = new_key
+    else:
+        existing = next((c for c in data["categories"] if c.get('name') == name), None)
+        if existing:
+            existing['icon'] = icon
+            existing['color'] = color
+        else:
+            new_cat = {
+                "id": f"cat-{str(uuid.uuid4())[:8]}",
+                "name": name,
+                "icon": icon,
+                "color": color
+            }
+            data["categories"].append(new_cat)
+            cat_key = f"cat:{name}"
+            if cat_key not in data["root_order"]:
+                data["root_order"].append(cat_key)
+
+    save_data(data)
+    return jsonify({
+        'success': True,
+        'categories': data["categories"],
+        'root_order': data["root_order"]
+    })
+
+
+@app.route('/api/categories/<path:cat_name>', methods=['DELETE'])
+def delete_category(cat_name):
+    """Elimina una cartella e riporta i servizi associati nella Home."""
+    data = load_data()
+    cat_name = cat_name.strip()
+    
+    data["categories"] = [c for c in data["categories"] if c.get('name') != cat_name]
+    cat_key = f"cat:{cat_name}"
+    if cat_key in data["root_order"]:
+        data["root_order"].remove(cat_key)
+
+    for s in data["services"]:
+        if s.get('category') == cat_name:
+            s['category'] = None
+            sid = s.get('id')
+            if sid and sid not in data["root_order"]:
+                data["root_order"].append(sid)
+
+    save_data(data)
+    return jsonify({
+        'success': True,
+        'categories': data["categories"],
+        'root_order': data["root_order"]
+    })
+
+
 @app.route('/api/title', methods=['POST'])
 def update_title():
-    """Update dashboard title."""
     payload = request.get_json(force=True, silent=True) or {}
     new_title = (payload.get('title') or '').strip()
     if not new_title:
@@ -489,10 +731,6 @@ def update_title():
 
 @app.route('/api/status', methods=['GET'])
 def check_status():
-    """
-    Check status of all configured services in parallel.
-    Supports ?id=<link_id> query to check just one service.
-    """
     target_id = request.args.get('id')
     data = load_data()
     services = data.get("services", [])
@@ -525,17 +763,12 @@ def check_status():
 
 @app.route('/api/scan', methods=['GET', 'POST'])
 def scan_network():
-    """
-    API endpoint: Scans LAN subnet for common open ports (80, 443, 8123, 8006, 8080)
-    and discovers mDNS services via zeroconf.
-    """
     devices = run_lan_scan()
     return jsonify({'success': True, 'devices': devices})
 
 
 @app.route('/api/backup', methods=['GET'])
 def download_backup():
-    """Download links.json as backup."""
     load_data()
     return send_file(
         DATA_FILE,
@@ -547,7 +780,6 @@ def download_backup():
 
 @app.route('/api/restore', methods=['POST'])
 def restore_backup():
-    """Restore links.json from uploaded file or JSON payload."""
     try:
         new_data = None
         if 'file' in request.files:
@@ -560,7 +792,7 @@ def restore_backup():
             return jsonify({'error': 'No valid JSON provided'}), 400
 
         if isinstance(new_data, list):
-            new_data = {"title": "LAN Dashboard", "services": new_data}
+            new_data = {"title": "LAN Dashboard", "services": new_data, "categories": [], "root_order": []}
         
         if "services" not in new_data or not isinstance(new_data["services"], list):
             return jsonify({'error': 'JSON must contain a "services" list'}), 400

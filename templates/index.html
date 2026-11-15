@@ -139,14 +139,14 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       flex-wrap: wrap;
     }
 
     .search-box {
       position: relative;
       flex: 1;
-      min-width: 200px;
+      min-width: 180px;
     }
 
     .search-box input {
@@ -197,7 +197,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.55rem 0.9rem;
+      padding: 0.55rem 0.85rem;
       border-radius: 10px;
       font-size: 0.85rem;
       font-weight: 500;
@@ -211,13 +211,19 @@
       white-space: nowrap;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.09);
       border-color: var(--border-color-hover);
       transform: translateY(-1px);
     }
 
-    .btn:active { transform: translateY(0); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
 
     .btn-primary {
       background: #2563eb;
@@ -225,7 +231,7 @@
       color: #fff;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       background: #1d4ed8;
       box-shadow: 0 0 15px var(--accent-glow);
     }
@@ -255,13 +261,16 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-                  box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-                  border-color 0.25s ease;
-      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                  box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                  border-color 0.2s ease,
+                  background 0.2s ease,
+                  opacity 0.2s ease;
+      cursor: grab;
       text-decoration: none;
       color: inherit;
       min-height: 140px;
+      user-select: none;
     }
 
     .card:hover {
@@ -269,6 +278,52 @@
       background: var(--bg-surface-hover);
       border-color: rgba(255, 255, 255, 0.18);
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.08);
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    /* Stili Drag and Drop */
+    .card.is-dragging {
+      opacity: 0.35 !important;
+      transform: scale(0.96) !important;
+      border-style: dashed !important;
+      border-color: var(--accent) !important;
+    }
+
+    .card.drag-over-target {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 2px var(--accent), 0 8px 24px var(--accent-glow) !important;
+    }
+
+    /* Evidenziazione quando si trascina sopra una Cartella */
+    .card-folder.folder-drop-hover {
+      border-color: #c084fc !important;
+      background: rgba(139, 92, 246, 0.28) !important;
+      transform: scale(1.04) translateY(-4px) !important;
+      box-shadow: 0 0 30px rgba(192, 132, 252, 0.5) !important;
+    }
+
+    /* Stile Speciale per Card Cartella */
+    .card-folder {
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      background: linear-gradient(135deg, rgba(30, 27, 75, 0.45) 0%, rgba(17, 24, 39, 0.7) 100%);
+    }
+
+    .card-folder:hover {
+      border-color: rgba(139, 92, 246, 0.6);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 24px rgba(139, 92, 246, 0.2);
+    }
+
+    .folder-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(139, 92, 246, 0.18);
+      color: #c4b5fd;
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      font-weight: 500;
     }
 
     .card-top {
@@ -384,6 +439,9 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .card-subtitle {
@@ -454,6 +512,7 @@
       gap: 0.6rem;
       cursor: pointer;
       transition: all 0.2s ease;
+      min-height: 140px;
     }
 
     .card-add:hover {
@@ -515,11 +574,13 @@
       border: 1px solid var(--border-color-hover);
       border-radius: 18px;
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
       transform: scale(0.95);
       transition: transform 0.2s ease;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     .modal-backdrop.open .modal { transform: scale(1); }
@@ -669,7 +730,7 @@
       background: rgba(0, 0, 0, 0.15);
     }
 
-    /* Stili Scanner Rete */
+    /* Stili Scanner Rete & Selezione Multipla */
     .scan-radar-container {
       display: flex;
       flex-direction: column;
@@ -707,11 +768,21 @@
       100% { transform: scale(2.0); opacity: 0; }
     }
 
+    .scan-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+    }
+
     .scanned-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      max-height: 55vh;
+      gap: 0.5rem;
+      max-height: 52vh;
       overflow-y: auto;
       padding: 0.25rem;
     }
@@ -721,11 +792,12 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      padding: 0.75rem 1rem;
+      padding: 0.65rem 0.85rem;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       transition: background 0.15s, border-color 0.15s;
+      cursor: pointer;
     }
 
     .scanned-item:hover {
@@ -733,10 +805,22 @@
       border-color: var(--border-color-hover);
     }
 
+    .scanned-item.checked {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .scanned-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
     .scanned-info {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.75rem;
       min-width: 0;
       flex: 1;
     }
@@ -747,7 +831,7 @@
     }
 
     .scanned-name {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 600;
       color: var(--text-main);
       white-space: nowrap;
@@ -759,7 +843,7 @@
     }
 
     .scanned-sub {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       font-family: monospace;
       white-space: nowrap;
@@ -785,10 +869,44 @@
     }
 
     .badge-added {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
       font-style: italic;
-      padding: 0.4rem 0.6rem;
+      padding: 0.3rem 0.5rem;
+    }
+
+    /* Modal Cartella & Zona di Uscita Drag */
+    .folder-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      padding: 0.25rem;
+      max-height: 55vh;
+      overflow-y: auto;
+    }
+
+    .folder-exit-dropzone {
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      padding: 0.85rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .folder-exit-dropzone.drag-active {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+      transform: scale(1.01);
     }
 
     /* Footer */
@@ -865,6 +983,12 @@
           <svg id="refreshIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         </button>
 
+        <!-- Pulsante Crea Cartella Dedicato -->
+        <button class="btn" onclick="openCreateFolderModal()" title="Crea una nuova cartella per organizzare i pulsanti">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+          <span>Crea Cartella</span>
+        </button>
+
         <!-- Pulsante Scansiona Rete -->
         <button class="btn" onclick="openScanModal()" title="Scansiona la rete locale per trovare servizi e dispositivi">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15 15 0 0 1 0 20M2 12a15 15 0 0 1 20 0"></path></svg>
@@ -879,7 +1003,7 @@
     </div>
   </header>
 
-  <!-- Griglia Servizi -->
+  <!-- Griglia Principale (Servizi e Cartelle) -->
   <main class="container">
     <div class="grid-container" id="servicesGrid"></div>
   </main>
@@ -888,7 +1012,7 @@
   <footer>
     <div class="container footer-content">
       <div>
-        <span>LAN Dashboard &bull; Ultra-leggero e autosufficiente</span>
+        <span>LAN Dashboard &bull; Ultra-leggero, Drag & Drop e Cartelle</span>
       </div>
       <div class="footer-buttons">
         <a href="/api/backup" class="btn" title="Scarica backup links.json">
@@ -931,6 +1055,15 @@
             <input class="form-input" type="text" id="serviceSubtitle" placeholder="Es. 192.168.1.100:8123 o Domotica">
           </div>
 
+          <!-- Selezione Cartella / Categoria -->
+          <div class="form-group">
+            <label class="form-label" for="serviceCategory">Cartella / Categoria</label>
+            <select class="form-input" id="serviceCategory" onchange="onCategorySelectChange(this.value)">
+              <!-- Popolato dinamicamente da JS -->
+            </select>
+            <input class="form-input" type="text" id="newCategoryInput" placeholder="Nome nuova cartella..." style="display:none; margin-top:0.4rem;">
+          </div>
+
           <div class="form-group">
             <label class="form-label">Icona (seleziona SVG o digita Emoji)</label>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -960,9 +1093,95 @@
     </div>
   </div>
 
-  <!-- Modale Scansione Rete (mDNS + Port Scan) -->
+  <!-- Modale Dedicata: Crea Nuova Cartella -->
+  <div class="modal-backdrop" id="createFolderModal" onclick="if(event.target===this) closeCreateFolderModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+          <span>Crea Nuova Cartella</span>
+        </h3>
+        <button class="modal-close" onclick="closeCreateFolderModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="createFolderForm" onsubmit="handleCreateFolderSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="folderFormName">Nome Cartella *</label>
+            <input class="form-input" type="text" id="folderFormName" placeholder="Es. Server, Domotica, Media, Rete" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Icona Cartella</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input class="form-input" type="text" id="folderCustomIconInput" placeholder="Nome icona o Emoji" style="flex:1" oninput="onFolderCustomIconInput(this.value)">
+              <div id="folderIconPreview" class="icon-wrapper" style="width:38px; height:38px;"></div>
+            </div>
+            <div class="icon-picker-grid" id="folderIconPickerGrid"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Colore Accento</label>
+            <div class="color-presets" id="folderColorPresets"></div>
+            <input type="hidden" id="folderFormColor" value="#8b5cf6">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeCreateFolderModal()">Annulla</button>
+          <button type="submit" class="btn btn-primary" id="saveFolderBtn">Crea Cartella</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modale Visualizzazione Cartella / Categoria -->
+  <div class="modal-backdrop" id="folderModal" onclick="if(event.target===this) closeFolderModal()">
+    <div class="modal" style="max-width: 900px; width: 92%;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div class="icon-wrapper" id="folderModalIcon" style="width:36px; height:36px; font-size:1.1rem;"></div>
+          <div>
+            <h3 class="modal-title" id="folderModalTitle">Cartella</h3>
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="folderModalSubtitle">0 servizi</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button class="btn btn-icon-only" onclick="editCurrentFolder()" title="Rinomina / Modifica Cartella">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="modal-close" onclick="closeFolderModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body" style="padding: 1.25rem;">
+        <!-- Zona di Rilascio per riportare in Home via Drag & Drop -->
+        <div class="folder-exit-dropzone" id="folderExitZone"
+             ondragover="onFolderExitDragOver(event)"
+             ondragleave="onFolderExitDragLeave(event)"
+             ondrop="onFolderExitDrop(event)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          <span>Trascina qui un pulsante per spostarlo nella <strong>Home</strong> principale</span>
+        </div>
+
+        <div class="folder-modal-grid" id="folderServicesGrid">
+          <!-- Servizi della cartella renderizzati qui -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn action-btn delete" onclick="deleteCurrentFolder()" style="padding:0.5rem 0.8rem; font-size:0.8rem;">
+          Elimina Cartella
+        </button>
+        <button type="button" class="btn" onclick="closeFolderModal()">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Scansione Rete (con Selezione Multipla) -->
   <div class="modal-backdrop" id="scanModal" onclick="if(event.target===this) closeScanModal()">
-    <div class="modal" style="max-width: 580px;">
+    <div class="modal" style="max-width: 620px;">
       <div class="modal-header">
         <h3 class="modal-title" style="display:flex; align-items:center; gap:0.5rem;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a15 15 0 0 1 0 20M2 12a15 15 0 0 1 20 0"></path></svg>
@@ -973,23 +1192,44 @@
         </button>
       </div>
       <div class="modal-body" id="scanModalBody">
-        <!-- Contenuto dinamico: caricamento o lista risultati -->
+        <!-- Injected by JavaScript -->
       </div>
-      <div class="modal-footer" id="scanModalFooter">
-        <button type="button" class="btn" onclick="closeScanModal()">Chiudi</button>
-        <button type="button" class="btn btn-primary" id="rescanBtn" onclick="startNetworkScan()">Riscansiona</button>
+      <div class="modal-footer" id="scanModalFooter" style="justify-content: space-between;">
+        <div id="scanSelectedInfo" style="font-size:0.82rem; color:var(--text-muted);">
+          Nessun elemento selezionato
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button type="button" class="btn" onclick="closeScanModal()">Chiudi</button>
+          <button type="button" class="btn" id="rescanBtn" onclick="startNetworkScan()">Riscansiona</button>
+          <button type="button" class="btn btn-primary" id="addSelectedBtn" onclick="addSelectedScannedDevices()" disabled>
+            Aggiungi Selezionati (0)
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // State
     let services = {{ services | tojson | safe }};
+    let categories = {{ categories | tojson | safe }};
+    let rootOrder = {{ root_order | tojson | safe }};
     let statuses = {};
     let selectedIcon = "globe";
     let selectedColor = "#3b82f6";
+    let folderSelectedIcon = "folder";
+    let folderSelectedColor = "#8b5cf6";
+    let currentOpenFolder = null;
+    let scannedDevices = [];
+    let selectedScannedIndices = new Set();
 
-    // Vettore SVG inline ad altissima efficienza
+    // Stato Drag & Drop
+    let draggedItemKey = null; // 'srv-xxx' o 'cat:Nome'
+    let draggedFromFolder = null; // null se dalla Home, oppure 'NomeCartella'
+
+    // Vettore SVG inline
     const ICONS = {
+      'folder': '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>',
       'router': '<path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line>',
       'shield': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>',
       'home': '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>',
@@ -1034,80 +1274,196 @@
     setInterval(updateClock, 1000);
     updateClock();
 
+    // ==========================================
+    // RENDER GRIGLIA PRINCIPALE CON ORDINAMENTO E DRAG & DROP
+    // ==========================================
+
     function renderServices(filterQuery = '') {
       const grid = document.getElementById('servicesGrid');
       const q = filterQuery.toLowerCase().trim();
 
-      const filtered = services.filter(s => {
-        if (!q) return true;
-        return (s.name && s.name.toLowerCase().includes(q)) ||
-               (s.subtitle && s.subtitle.toLowerCase().includes(q)) ||
-               (s.url && s.url.toLowerCase().includes(q));
+      // Mappatura delle categorie e dei relativi servizi
+      const folderMap = {};
+      categories.forEach(c => {
+        folderMap[c.name] = {
+          config: c,
+          services: []
+        };
       });
 
-      if (filtered.length === 0 && q) {
+      const rootServiceMap = {};
+
+      services.forEach(s => {
+        const cat = (s.category || '').trim();
+        if (cat) {
+          if (!folderMap[cat]) {
+            folderMap[cat] = {
+              config: { name: cat, icon: 'folder', color: '#8b5cf6' },
+              services: []
+            };
+          }
+          folderMap[cat].services.push(s);
+        } else {
+          rootServiceMap[s.id] = s;
+        }
+      });
+
+      // Costruiamo la lista ordinata di elementi root in base a rootOrder
+      const displayItems = [];
+      const usedKeys = new Set();
+
+      (rootOrder || []).forEach(key => {
+        if (key.startsWith('cat:')) {
+          const catName = key.substring(4);
+          if (folderMap[catName]) {
+            displayItems.push({ type: 'folder', key: key, name: catName, data: folderMap[catName] });
+            usedKeys.add(key);
+          }
+        } else if (rootServiceMap[key]) {
+          displayItems.push({ type: 'service', key: key, data: rootServiceMap[key] });
+          usedKeys.add(key);
+        }
+      });
+
+      // Aggiungi eventuali cartelle non presenti in rootOrder
+      Object.keys(folderMap).forEach(catName => {
+        const key = `cat:${catName}`;
+        if (!usedKeys.has(key)) {
+          displayItems.push({ type: 'folder', key: key, name: catName, data: folderMap[catName] });
+          usedKeys.add(key);
+        }
+      });
+
+      // Aggiungi eventuali servizi root non presenti in rootOrder
+      Object.keys(rootServiceMap).forEach(sid => {
+        if (!usedKeys.has(sid)) {
+          displayItems.push({ type: 'service', key: sid, data: rootServiceMap[sid] });
+          usedKeys.add(sid);
+        }
+      });
+
+      let html = '';
+      let matchCount = 0;
+
+      displayItems.forEach((item, index) => {
+        if (item.type === 'folder') {
+          const catName = item.name;
+          const folder = item.data;
+          const folderSvcs = folder.services;
+          const conf = folder.config;
+
+          // Se stiamo cercando, filtriamo
+          let matches = folderSvcs;
+          if (q) {
+            matches = folderSvcs.filter(s => 
+              (s.name && s.name.toLowerCase().includes(q)) ||
+              (s.subtitle && s.subtitle.toLowerCase().includes(q)) ||
+              (s.url && s.url.toLowerCase().includes(q)) ||
+              catName.toLowerCase().includes(q)
+            );
+            if (matches.length === 0 && !catName.toLowerCase().includes(q)) {
+              return;
+            }
+          }
+
+          matchCount++;
+
+          // Status sintetico
+          let onlineCount = 0;
+          let offlineCount = 0;
+          folderSvcs.forEach(s => {
+            const st = statuses[s.id];
+            if (st && st.online === true) onlineCount++;
+            else if (st && st.online === false) offlineCount++;
+          });
+
+          let folderStatusClass = 'checking';
+          let folderStatusTooltip = `${catName} &bull; ${folderSvcs.length} servizi`;
+          if (folderSvcs.length > 0) {
+            if (onlineCount === folderSvcs.length) {
+              folderStatusClass = 'online';
+              folderStatusTooltip = `${catName} &bull; Tutti i ${folderSvcs.length} servizi online`;
+            } else if (offlineCount === folderSvcs.length) {
+              folderStatusClass = 'offline';
+              folderStatusTooltip = `${catName} &bull; Tutti offline`;
+            } else if (onlineCount > 0) {
+              folderStatusClass = 'checking';
+              folderStatusTooltip = `${catName} &bull; ${onlineCount}/${folderSvcs.length} online`;
+            }
+          }
+
+          const fColor = conf.color || '#8b5cf6';
+          const fIcon = conf.icon || 'folder';
+          const itemKey = `cat:${catName}`;
+
+          html += `
+            <div class="card card-folder" 
+                 data-key="${escapeHtml(itemKey)}"
+                 data-category="${escapeHtml(catName)}"
+                 draggable="true"
+                 ondragstart="onCardDragStart(event, '${escapeHtml(itemKey)}')"
+                 ondragend="onCardDragEnd(event)"
+                 ondragover="onCardDragOver(event, '${escapeHtml(itemKey)}')"
+                 ondragleave="onCardDragLeave(event)"
+                 ondrop="onCardDrop(event, '${escapeHtml(itemKey)}')"
+                 onclick="openFolderModal('${escapeHtml(catName)}')" 
+                 style="border-left: 3px solid ${fColor};"
+                 title="Clicca per aprire la cartella. Trascina un servizio sopra per inserirlo!">
+              <div>
+                <div class="card-top">
+                  <div class="icon-wrapper" style="border-color: ${fColor}44; background: ${fColor}20;">
+                    ${renderIcon(fIcon, fColor)}
+                  </div>
+                  <div class="status-container" title="${folderStatusTooltip.replace('&bull;', '•')}">
+                    <div class="status-dot ${folderStatusClass}"></div>
+                    <div class="tooltip">${folderStatusTooltip}</div>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <div class="card-title">
+                    <span>${escapeHtml(catName)}</span>
+                    <span class="folder-badge">Cartella</span>
+                  </div>
+                  <div class="card-subtitle" style="font-family: inherit; color: var(--text-muted);">
+                    ${folderSvcs.length} ${folderSvcs.length === 1 ? 'servizio' : 'servizi'} archiviati
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-actions" onclick="event.stopPropagation();">
+                <button class="action-btn" onclick="openFolderModal('${escapeHtml(catName)}')" title="Apri Cartella">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+                  <span>Apri</span>
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          // Servizio Root
+          const svc = item.data;
+          if (q) {
+            const matches = (svc.name && svc.name.toLowerCase().includes(q)) ||
+                            (svc.subtitle && svc.subtitle.toLowerCase().includes(q)) ||
+                            (svc.url && svc.url.toLowerCase().includes(q));
+            if (!matches) return;
+          }
+          matchCount++;
+          html += renderServiceCardHtml(svc, false);
+        }
+      });
+
+      if (matchCount === 0 && q) {
         grid.innerHTML = `
           <div class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <p>Nessun servizio corrisponde a "<strong>${escapeHtml(q)}</strong>"</p>
+            <p>Nessun servizio o cartella corrisponde a "<strong>${escapeHtml(q)}</strong>"</p>
           </div>
         `;
         return;
       }
 
-      let html = '';
-      filtered.forEach((svc, index) => {
-        const sid = svc.id;
-        const status = statuses[sid] || { online: null, latency_ms: null, detail: 'In attesa...' };
-        
-        let statusClass = 'checking';
-        let tooltipText = 'Verifica in corso...';
-        
-        if (status.online === true) {
-          statusClass = 'online';
-          tooltipText = `Online &bull; ${status.latency_ms ? status.latency_ms + 'ms' : 'OK'}`;
-          if (status.detail) tooltipText += ` (${status.detail})`;
-        } else if (status.online === false) {
-          statusClass = 'offline';
-          tooltipText = `Offline &bull; ${status.detail || 'Non raggiungibile'}`;
-        }
-
-        const targetAttr = svc.new_tab ? 'target="_blank" rel="noopener noreferrer"' : '';
-        const iconColor = svc.color || '#3b82f6';
-
-        html += `
-          <a class="card" href="${escapeHtml(svc.url)}" ${targetAttr} data-id="${sid}">
-            <div>
-              <div class="card-top">
-                <div class="icon-wrapper" style="border-color: ${iconColor}33; background: ${iconColor}15;">
-                  ${renderIcon(svc.icon, iconColor)}
-                </div>
-                <div class="status-container" title="${tooltipText.replace('&bull;', '•')}">
-                  <div class="status-dot ${statusClass}"></div>
-                  <div class="tooltip">${tooltipText}</div>
-                </div>
-              </div>
-
-              <div class="card-body">
-                <div class="card-title" title="${escapeHtml(svc.name)}">${escapeHtml(svc.name)}</div>
-                <div class="card-subtitle" title="${escapeHtml(svc.subtitle || svc.url)}">${escapeHtml(svc.subtitle || svc.url)}</div>
-              </div>
-            </div>
-
-            <div class="card-actions" onclick="event.preventDefault(); event.stopPropagation();">
-              ${index > 0 ? `<button class="action-btn" onclick="moveService('${sid}', -1)" title="Sposta a sinistra">◀</button>` : ''}
-              ${index < filtered.length - 1 ? `<button class="action-btn" onclick="moveService('${sid}', 1)" title="Sposta a destra">▶</button>` : ''}
-              <button class="action-btn" onclick="openEditModal('${sid}')" title="Modifica">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              </button>
-              <button class="action-btn delete" onclick="deleteService('${sid}')" title="Elimina">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </div>
-          </a>
-        `;
-      });
-
+      // Card Aggiungi Nuova
       if (!q) {
         html += `
           <div class="card card-add" onclick="openAddModal()">
@@ -1121,6 +1477,456 @@
 
       grid.innerHTML = html;
     }
+
+    // Helper: genera HTML per una card servizio con supporto Drag & Drop
+    function renderServiceCardHtml(svc, isInFolder = false) {
+      const sid = svc.id;
+      const status = statuses[sid] || { online: null, latency_ms: null, detail: 'In attesa...' };
+      
+      let statusClass = 'checking';
+      let tooltipText = 'Verifica in corso...';
+      
+      if (status.online === true) {
+        statusClass = 'online';
+        tooltipText = `Online &bull; ${status.latency_ms ? status.latency_ms + 'ms' : 'OK'}`;
+        if (status.detail) tooltipText += ` (${status.detail})`;
+      } else if (status.online === false) {
+        statusClass = 'offline';
+        tooltipText = `Offline &bull; ${status.detail || 'Non raggiungibile'}`;
+      }
+
+      const targetAttr = svc.new_tab ? 'target="_blank" rel="noopener noreferrer"' : '';
+      const iconColor = svc.color || '#3b82f6';
+      const folderAttr = isInFolder ? (svc.category || '') : '';
+
+      return `
+        <a class="card" 
+           href="${escapeHtml(svc.url)}" 
+           ${targetAttr} 
+           data-key="${sid}"
+           data-id="${sid}"
+           data-folder="${escapeHtml(folderAttr)}"
+           draggable="true"
+           ondragstart="onCardDragStart(event, '${sid}', '${escapeHtml(folderAttr)}')"
+           ondragend="onCardDragEnd(event)"
+           ondragover="onCardDragOver(event, '${sid}')"
+           ondragleave="onCardDragLeave(event)"
+           ondrop="onCardDrop(event, '${sid}')"
+           title="Trascina per riordinare o rilascia sopra una cartella!">
+          <div>
+            <div class="card-top">
+              <div class="icon-wrapper" style="border-color: ${iconColor}33; background: ${iconColor}15;">
+                ${renderIcon(svc.icon, iconColor)}
+              </div>
+              <div class="status-container" title="${tooltipText.replace('&bull;', '•')}">
+                <div class="status-dot ${statusClass}"></div>
+                <div class="tooltip">${tooltipText}</div>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="card-title" title="${escapeHtml(svc.name)}">${escapeHtml(svc.name)}</div>
+              <div class="card-subtitle" title="${escapeHtml(svc.subtitle || svc.url)}">${escapeHtml(svc.subtitle || svc.url)}</div>
+            </div>
+          </div>
+
+          <div class="card-actions" onclick="event.preventDefault(); event.stopPropagation();">
+            ${isInFolder ? `
+              <button class="action-btn" onclick="moveOutOfFolder('${sid}')" title="Sposta nella Home principale">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                <span>Home</span>
+              </button>
+            ` : ''}
+            <button class="action-btn" onclick="openEditModal('${sid}')" title="Modifica">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            <button class="action-btn delete" onclick="deleteService('${sid}')" title="Elimina">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </a>
+      `;
+    }
+
+    // ==========================================
+    // LOGICA DRAG AND DROP FLUIDA & REATTIVA
+    // ==========================================
+
+    function onCardDragStart(e, key, fromFolder = '') {
+      draggedItemKey = key;
+      draggedFromFolder = fromFolder || null;
+      e.dataTransfer.setData('text/plain', key);
+      e.dataTransfer.effectAllowed = 'move';
+      
+      const card = e.currentTarget;
+      setTimeout(() => {
+        if (card) card.classList.add('is-dragging');
+      }, 0);
+    }
+
+    function onCardDragEnd(e) {
+      if (e.currentTarget) e.currentTarget.classList.remove('is-dragging');
+      document.querySelectorAll('.drag-over-target, .folder-drop-hover, .is-dragging').forEach(el => {
+        el.classList.remove('drag-over-target', 'folder-drop-hover', 'is-dragging');
+      });
+      draggedItemKey = null;
+      draggedFromFolder = null;
+    }
+
+    function onCardDragOver(e, targetKey) {
+      if (!draggedItemKey || draggedItemKey === targetKey) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+
+      const targetEl = e.currentTarget;
+
+      // Se stiamo trascinando un servizio sopra una cartella
+      if (targetKey.startsWith('cat:') && !draggedItemKey.startsWith('cat:')) {
+        targetEl.classList.add('folder-drop-hover');
+      } else {
+        targetEl.classList.add('drag-over-target');
+      }
+    }
+
+    function onCardDragLeave(e) {
+      e.currentTarget.classList.remove('drag-over-target', 'folder-drop-hover');
+    }
+
+    async function onCardDrop(e, targetKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      const targetEl = e.currentTarget;
+      targetEl.classList.remove('drag-over-target', 'folder-drop-hover');
+
+      if (!draggedItemKey || draggedItemKey === targetKey) return;
+
+      const isDraggedService = !draggedItemKey.startsWith('cat:');
+      const isTargetFolder = targetKey.startsWith('cat:');
+
+      // CASO 1: Trascina un pulsante DENTRO una cartella
+      if (isDraggedService && isTargetFolder) {
+        const targetCategory = targetKey.substring(4);
+        const item = services.find(s => s.id === draggedItemKey);
+        if (!item) return;
+
+        item.category = targetCategory;
+
+        // Se era in rootOrder, rimuovilo
+        if (rootOrder.includes(draggedItemKey)) {
+          rootOrder = rootOrder.filter(k => k !== draggedItemKey);
+        }
+
+        renderServices(document.getElementById('searchInput').value);
+
+        try {
+          await fetch(`/api/links/${draggedItemKey}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: targetCategory })
+          });
+          await fetch('/api/layout/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order: rootOrder })
+          });
+        } catch (err) {
+          console.error('Errore spostamento cartella:', err);
+        }
+        return;
+      }
+
+      // CASO 2: Riordino all'interno della modale cartella
+      if (currentOpenFolder && isDraggedService && !isTargetFolder) {
+        const folderSvcs = services.filter(s => (s.category || '').trim() === currentOpenFolder);
+        const fromIdx = folderSvcs.findIndex(s => s.id === draggedItemKey);
+        const toIdx = folderSvcs.findIndex(s => s.id === targetKey);
+
+        if (fromIdx >= 0 && toIdx >= 0) {
+          const [moved] = folderSvcs.splice(fromIdx, 1);
+          folderSvcs.splice(toIdx, 0, moved);
+
+          // Ricostruisci array generale
+          const others = services.filter(s => (s.category || '').trim() !== currentOpenFolder);
+          services = [...others, ...folderSvcs];
+
+          renderFolderServicesGrid(folderSvcs, currentOpenFolder);
+
+          try {
+            await fetch('/api/links/reorder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: services.map(s => s.id) })
+            });
+          } catch (err) {
+            console.error('Errore riordino servizi:', err);
+          }
+        }
+        return;
+      }
+
+      // CASO 3: Riordino nella griglia principale (Root Order di cartelle e pulsanti)
+      if (!currentOpenFolder) {
+        const fromIdx = rootOrder.indexOf(draggedItemKey);
+        const toIdx = rootOrder.indexOf(targetKey);
+
+        if (fromIdx >= 0 && toIdx >= 0) {
+          const [moved] = rootOrder.splice(fromIdx, 1);
+          rootOrder.splice(toIdx, 0, moved);
+
+          renderServices(document.getElementById('searchInput').value);
+
+          try {
+            await fetch('/api/layout/reorder', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: rootOrder })
+            });
+          } catch (err) {
+            console.error('Errore salvataggio layout:', err);
+          }
+        }
+      }
+    }
+
+    // Drag & Drop Fuori dalla Cartella (Drop Zone di uscita)
+    function onFolderExitDragOver(e) {
+      if (!draggedItemKey || draggedItemKey.startsWith('cat:')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.getElementById('folderExitZone').classList.add('drag-active');
+    }
+
+    function onFolderExitDragLeave(e) {
+      document.getElementById('folderExitZone').classList.remove('drag-active');
+    }
+
+    async function onFolderExitDrop(e) {
+      e.preventDefault();
+      document.getElementById('folderExitZone').classList.remove('drag-active');
+
+      if (!draggedItemKey || draggedItemKey.startsWith('cat:')) return;
+      const sid = draggedItemKey;
+      await moveOutOfFolder(sid);
+    }
+
+    // ==========================================
+    // MODALE DEDICATA: CREA NUOVA CARTELLA
+    // ==========================================
+
+    function openCreateFolderModal() {
+      document.getElementById('folderFormName').value = '';
+      selectFolderIcon('folder');
+      selectFolderColor('#8b5cf6');
+      initFolderIconAndColorPickers();
+      document.getElementById('createFolderModal').classList.add('open');
+      setTimeout(() => document.getElementById('folderFormName').focus(), 50);
+    }
+
+    function closeCreateFolderModal() {
+      document.getElementById('createFolderModal').classList.remove('open');
+    }
+
+    function initFolderIconAndColorPickers() {
+      const grid = document.getElementById('folderIconPickerGrid');
+      grid.innerHTML = Object.keys(ICONS).map(k => `
+        <div class="icon-choice ${k === folderSelectedIcon ? 'selected' : ''}" data-icon="${k}" onclick="selectFolderIcon('${k}')" title="${k}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICONS[k]}</svg>
+        </div>
+      `).join('');
+
+      const colorsEl = document.getElementById('folderColorPresets');
+      colorsEl.innerHTML = COLORS.map(c => `
+        <div class="color-swatch ${c === folderSelectedColor ? 'selected' : ''}" style="background: ${c};" onclick="selectFolderColor('${c}')"></div>
+      `).join('');
+
+      updateFolderIconPreview();
+    }
+
+    function selectFolderIcon(iconKey) {
+      folderSelectedIcon = iconKey;
+      document.getElementById('folderCustomIconInput').value = iconKey;
+      document.querySelectorAll('#folderIconPickerGrid .icon-choice').forEach(el => {
+        el.classList.toggle('selected', el.getAttribute('data-icon') === iconKey);
+      });
+      updateFolderIconPreview();
+    }
+
+    function onFolderCustomIconInput(val) {
+      folderSelectedIcon = val.trim() || 'folder';
+      document.querySelectorAll('#folderIconPickerGrid .icon-choice').forEach(el => {
+        el.classList.toggle('selected', el.getAttribute('data-icon') === folderSelectedIcon);
+      });
+      updateFolderIconPreview();
+    }
+
+    function selectFolderColor(colorHex) {
+      folderSelectedColor = colorHex;
+      document.getElementById('folderFormColor').value = colorHex;
+      document.querySelectorAll('#folderColorPresets .color-swatch').forEach(el => {
+        el.classList.toggle('selected', el.style.backgroundColor === colorHex || el.style.background === colorHex);
+      });
+      updateFolderIconPreview();
+    }
+
+    function updateFolderIconPreview() {
+      const preview = document.getElementById('folderIconPreview');
+      preview.style.borderColor = folderSelectedColor + '44';
+      preview.style.background = folderSelectedColor + '20';
+      preview.innerHTML = renderIcon(folderSelectedIcon, folderSelectedColor);
+    }
+
+    async function handleCreateFolderSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('folderFormName').value.trim();
+      if (!name) return;
+
+      const btn = document.getElementById('saveFolderBtn');
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            icon: folderSelectedIcon,
+            color: folderSelectedColor
+          })
+        });
+
+        if (resp.ok) {
+          const res = await resp.json();
+          categories = res.categories || [];
+          rootOrder = res.root_order || rootOrder;
+          closeCreateFolderModal();
+          renderServices();
+        } else {
+          const err = await resp.json();
+          alert('Errore: ' + (err.error || 'Impossibile creare la cartella'));
+        }
+      } catch (err) {
+        alert('Errore di connessione con il server');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ==========================================
+    // MODALE VISUALIZZAZIONE CARTELLA
+    // ==========================================
+
+    function openFolderModal(categoryName) {
+      currentOpenFolder = categoryName;
+      const folderConf = categories.find(c => c.name === categoryName) || { name: categoryName, icon: 'folder', color: '#8b5cf6' };
+      const folderServices = services.filter(s => (s.category || '').trim() === categoryName);
+
+      document.getElementById('folderModalTitle').textContent = categoryName;
+      document.getElementById('folderModalSubtitle').textContent = `${folderServices.length} ${folderServices.length === 1 ? 'servizio' : 'servizi'}`;
+      
+      const iconWrap = document.getElementById('folderModalIcon');
+      iconWrap.style.borderColor = (folderConf.color || '#8b5cf6') + '44';
+      iconWrap.style.background = (folderConf.color || '#8b5cf6') + '20';
+      iconWrap.innerHTML = renderIcon(folderConf.icon || 'folder', folderConf.color || '#8b5cf6');
+
+      renderFolderServicesGrid(folderServices, categoryName);
+      document.getElementById('folderModal').classList.add('open');
+    }
+
+    function closeFolderModal() {
+      document.getElementById('folderModal').classList.remove('open');
+      currentOpenFolder = null;
+      renderServices(document.getElementById('searchInput').value);
+    }
+
+    function renderFolderServicesGrid(folderServices, categoryName) {
+      const grid = document.getElementById('folderServicesGrid');
+      let html = '';
+
+      folderServices.forEach((svc) => {
+        html += renderServiceCardHtml(svc, true);
+      });
+
+      // Card Aggiungi a questa cartella
+      html += `
+        <div class="card card-add" onclick="openAddModal('${escapeHtml(categoryName)}')">
+          <div class="card-add-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </div>
+          <div class="card-add-text">Aggiungi a ${escapeHtml(categoryName)}</div>
+        </div>
+      `;
+
+      grid.innerHTML = html;
+    }
+
+    async function moveOutOfFolder(sid) {
+      const item = services.find(s => s.id === sid);
+      if (!item) return;
+
+      try {
+        const resp = await fetch(`/api/links/${sid}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: null })
+        });
+        if (resp.ok) {
+          const res = await resp.json();
+          item.category = null;
+          rootOrder = res.root_order || rootOrder;
+
+          if (currentOpenFolder) {
+            const remaining = services.filter(s => (s.category || '').trim() === currentOpenFolder);
+            renderFolderServicesGrid(remaining, currentOpenFolder);
+            document.getElementById('folderModalSubtitle').textContent = `${remaining.length} servizi`;
+          }
+          renderServices(document.getElementById('searchInput').value);
+        }
+      } catch (err) {
+        alert('Errore spostamento servizio');
+      }
+    }
+
+    async function editCurrentFolder() {
+      if (!currentOpenFolder) return;
+      const current = currentOpenFolder;
+      const next = prompt('Nuovo nome per la cartella:', current);
+      if (!next || !next.trim() || next.trim() === current) return;
+
+      try {
+        const resp = await fetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_name: current, name: next.trim(), icon: 'folder', color: '#8b5cf6' })
+        });
+        if (resp.ok) {
+          await reloadServices();
+          openFolderModal(next.trim());
+        }
+      } catch (err) {
+        alert('Errore rinomina cartella');
+      }
+    }
+
+    async function deleteCurrentFolder() {
+      if (!currentOpenFolder) return;
+      if (!confirm(`Eliminare la cartella "${currentOpenFolder}"? I servizi contenuti NON verranno eliminati ma spostati nella pagina principale (Home).`)) return;
+
+      try {
+        const resp = await fetch(`/api/categories/${encodeURIComponent(currentOpenFolder)}`, {
+          method: 'DELETE'
+        });
+        if (resp.ok) {
+          closeFolderModal();
+          await reloadServices();
+        }
+      } catch (err) {
+        alert('Errore eliminazione cartella');
+      }
+    }
+
+    // ==========================================
+    // HEALTH CHECK & REFRESH
+    // ==========================================
 
     async function refreshStatus() {
       const refreshIcon = document.getElementById('refreshIcon');
@@ -1143,8 +1949,16 @@
       } finally {
         refreshIcon.classList.remove('spinning');
         renderServices(document.getElementById('searchInput').value);
+        if (currentOpenFolder) {
+          const folderServices = services.filter(s => (s.category || '').trim() === currentOpenFolder);
+          renderFolderServicesGrid(folderServices, currentOpenFolder);
+        }
       }
     }
+
+    // ==========================================
+    // RICERCA E FILTRI
+    // ==========================================
 
     function filterServices() {
       const val = document.getElementById('searchInput').value;
@@ -1159,98 +1973,20 @@
     }
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
         e.preventDefault();
         document.getElementById('searchInput').focus();
       } else if (e.key === 'Escape') {
         closeModal();
         closeScanModal();
+        closeFolderModal();
+        closeCreateFolderModal();
         clearSearch();
       }
     });
 
-    function initIconAndColorPickers() {
-      const grid = document.getElementById('iconPickerGrid');
-      grid.innerHTML = Object.keys(ICONS).map(k => `
-        <div class="icon-choice ${k === selectedIcon ? 'selected' : ''}" data-icon="${k}" onclick="selectIcon('${k}')" title="${k}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICONS[k]}</svg>
-        </div>
-      `).join('');
-
-      const colorsEl = document.getElementById('colorPresets');
-      colorsEl.innerHTML = COLORS.map(c => `
-        <div class="color-swatch ${c === selectedColor ? 'selected' : ''}" style="background: ${c};" onclick="selectColor('${c}')"></div>
-      `).join('');
-    }
-
-    function selectIcon(iconKey) {
-      selectedIcon = iconKey;
-      document.getElementById('customIconInput').value = iconKey;
-      document.querySelectorAll('.icon-choice').forEach(el => {
-        el.classList.toggle('selected', el.getAttribute('data-icon') === iconKey);
-      });
-      updateIconPreview();
-    }
-
-    function onCustomIconInput(val) {
-      selectedIcon = val.trim() || 'globe';
-      document.querySelectorAll('.icon-choice').forEach(el => {
-        el.classList.toggle('selected', el.getAttribute('data-icon') === selectedIcon);
-      });
-      updateIconPreview();
-    }
-
-    function selectColor(colorHex) {
-      selectedColor = colorHex;
-      document.getElementById('serviceColor').value = colorHex;
-      document.querySelectorAll('.color-swatch').forEach(el => {
-        el.classList.toggle('selected', el.style.backgroundColor === colorHex || el.style.background === colorHex);
-      });
-      updateIconPreview();
-    }
-
-    function updateIconPreview() {
-      const preview = document.getElementById('iconPreview');
-      preview.style.borderColor = selectedColor + '44';
-      preview.style.background = selectedColor + '20';
-      preview.innerHTML = renderIcon(selectedIcon, selectedColor);
-    }
-
-    function openAddModal() {
-      document.getElementById('modalTitle').textContent = 'Aggiungi Servizio';
-      document.getElementById('serviceId').value = '';
-      document.getElementById('serviceName').value = '';
-      document.getElementById('serviceUrl').value = '';
-      document.getElementById('serviceSubtitle').value = '';
-      document.getElementById('serviceNewTab').checked = true;
-      selectIcon('globe');
-      selectColor('#3b82f6');
-      document.getElementById('serviceModal').classList.add('open');
-      setTimeout(() => document.getElementById('serviceName').focus(), 50);
-    }
-
-    function openEditModal(sid) {
-      const item = services.find(s => s.id === sid);
-      if (!item) return;
-
-      document.getElementById('modalTitle').textContent = 'Modifica Servizio';
-      document.getElementById('serviceId').value = item.id;
-      document.getElementById('serviceName').value = item.name || '';
-      document.getElementById('serviceUrl').value = item.url || '';
-      document.getElementById('serviceSubtitle').value = item.subtitle || '';
-      document.getElementById('serviceNewTab').checked = item.new_tab !== false;
-      selectIcon(item.icon || 'globe');
-      selectColor(item.color || '#3b82f6');
-      document.getElementById('serviceModal').classList.add('open');
-      setTimeout(() => document.getElementById('serviceName').focus(), 50);
-    }
-
-    function closeModal() {
-      document.getElementById('serviceModal').classList.remove('open');
-    }
-
     // ==========================================
-    // LOGICA MODALE SCANSIONE RETE
+    // SCANSIONE RETE CON SELEZIONE MULTIPLA
     // ==========================================
 
     function openScanModal() {
@@ -1260,12 +1996,19 @@
 
     function closeScanModal() {
       document.getElementById('scanModal').classList.remove('open');
+      scannedDevices = [];
+      selectedScannedIndices.clear();
     }
 
     async function startNetworkScan() {
       const body = document.getElementById('scanModalBody');
       const rescanBtn = document.getElementById('rescanBtn');
+      const addSelectedBtn = document.getElementById('addSelectedBtn');
+      
       if (rescanBtn) rescanBtn.disabled = true;
+      if (addSelectedBtn) addSelectedBtn.disabled = true;
+      selectedScannedIndices.clear();
+      updateSelectedCountUi();
 
       body.innerHTML = `
         <div class="scan-radar-container">
@@ -1283,13 +2026,13 @@
         const resp = await fetch('/api/scan');
         if (!resp.ok) throw new Error('Errore durante la scansione');
         const data = await resp.json();
-        const devices = data.devices || [];
+        scannedDevices = data.devices || [];
 
-        if (devices.length === 0) {
+        if (scannedDevices.length === 0) {
           body.innerHTML = `
             <div class="empty-state" style="padding: 2.5rem 1rem;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
-              <p>Nessun nuovo dispositivo o servizio rilevato sulla subnet locale.</p>
+              <p>Nessun nuovo dispositivo rilevato sulla subnet locale.</p>
             </div>
           `;
           return;
@@ -1297,23 +2040,43 @@
 
         const existingUrls = new Set(services.map(s => s.url.replace(/\/+$/, '').toLowerCase()));
 
+        let catOptions = `<option value="">🏠 Home (Nessuna cartella)</option>`;
+        categories.forEach(c => {
+          catOptions += `<option value="${escapeHtml(c.name)}">📁 ${escapeHtml(c.name)}</option>`;
+        });
+
         let listHtml = `
-          <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
-            <span>Trovati <strong>${devices.length}</strong> servizi attivi sulla rete:</span>
+          <div class="scan-toolbar">
+            <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer; user-select:none;">
+              <input type="checkbox" id="scanSelectAll" class="scanned-checkbox" onchange="toggleSelectAllScanned(this.checked)">
+              <span><strong>Seleziona tutti</strong> (${scannedDevices.length} dispositivi)</span>
+            </label>
+
+            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.82rem;">
+              <span style="color:var(--text-muted);">Destinazione:</span>
+              <select id="scanTargetCategory" class="form-input" style="padding:0.3rem 0.6rem; font-size:0.8rem;">
+                ${catOptions}
+              </select>
+            </div>
           </div>
-          <div class="scanned-list">
+
+          <div class="scanned-list" id="scannedListContainer">
         `;
 
-        devices.forEach((dev, idx) => {
+        scannedDevices.forEach((dev, idx) => {
           const isAdded = existingUrls.has(dev.url.replace(/\/+$/, '').toLowerCase());
           const isMdns = dev.source === 'mDNS';
           const badgeClass = isMdns ? 'badge-source mdns' : 'badge-source';
           const iconColor = dev.color || '#3b82f6';
 
           listHtml += `
-            <div class="scanned-item" id="scanned-item-${idx}">
-              <div class="scanned-info">
-                <div class="icon-wrapper" style="width:38px; height:38px; border-color:${iconColor}33; background:${iconColor}15; font-size:1.1rem;">
+            <div class="scanned-item" id="scanned-row-${idx}" onclick="handleScanRowClick(${idx}, event)">
+              <div style="display:flex; align-items:center; gap:0.75rem; min-width:0; flex:1;">
+                ${isAdded ? 
+                  `<span style="width:18px;"></span>` : 
+                  `<input type="checkbox" class="scanned-checkbox scan-item-cb" data-idx="${idx}" onchange="toggleScannedItem(${idx}, this.checked)" onclick="event.stopPropagation()">`
+                }
+                <div class="icon-wrapper" style="width:36px; height:36px; border-color:${iconColor}33; background:${iconColor}15; font-size:1.1rem;">
                   ${renderIcon(dev.icon, iconColor)}
                 </div>
                 <div class="scanned-details">
@@ -1328,7 +2091,7 @@
               <div>
                 ${isAdded ? 
                   `<span class="badge-added">Già presente</span>` : 
-                  `<button class="btn btn-primary" style="padding:0.4rem 0.75rem; font-size:0.8rem;" onclick='addScannedDevice(${JSON.stringify(dev)}, this)'>
+                  `<button class="btn btn-primary" style="padding:0.35rem 0.65rem; font-size:0.78rem;" onclick='addSingleScannedDevice(${idx}, this); event.stopPropagation();'>
                     + Aggiungi
                   </button>`
                 }
@@ -1343,7 +2106,7 @@
       } catch (err) {
         body.innerHTML = `
           <div class="empty-state" style="padding: 2rem 1rem; color:#fca5a5;">
-            <p>Errore durante la scansione di rete: ${escapeHtml(err.message)}</p>
+            <p>Errore durante la scansione: ${escapeHtml(err.message)}</p>
           </div>
         `;
       } finally {
@@ -1351,18 +2114,118 @@
       }
     }
 
-    async function addScannedDevice(device, btn) {
+    function handleScanRowClick(idx, event) {
+      if (event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT') return;
+      const cb = document.querySelector(`.scan-item-cb[data-idx="${idx}"]`);
+      if (cb) {
+        cb.checked = !cb.checked;
+        toggleScannedItem(idx, cb.checked);
+      }
+    }
+
+    function toggleScannedItem(idx, isChecked) {
+      if (isChecked) selectedScannedIndices.add(idx);
+      else selectedScannedIndices.delete(idx);
+      const row = document.getElementById(`scanned-row-${idx}`);
+      if (row) row.classList.toggle('checked', isChecked);
+      updateSelectedCountUi();
+    }
+
+    function toggleSelectAllScanned(isChecked) {
+      document.querySelectorAll('.scan-item-cb').forEach(cb => {
+        cb.checked = isChecked;
+        const idx = parseInt(cb.getAttribute('data-idx'));
+        if (isChecked) selectedScannedIndices.add(idx);
+        else selectedScannedIndices.delete(idx);
+        const row = document.getElementById(`scanned-row-${idx}`);
+        if (row) row.classList.toggle('checked', isChecked);
+      });
+      updateSelectedCountUi();
+    }
+
+    function updateSelectedCountUi() {
+      const count = selectedScannedIndices.size;
+      const btn = document.getElementById('addSelectedBtn');
+      const info = document.getElementById('scanSelectedInfo');
+      
+      if (btn) {
+        btn.disabled = count === 0;
+        btn.textContent = `Aggiungi Selezionati (${count})`;
+      }
+      if (info) {
+        info.textContent = count === 0 ? 'Nessun elemento selezionato' : `${count} elementi selezionati`;
+      }
+    }
+
+    async function addSelectedScannedDevices() {
+      if (selectedScannedIndices.size === 0) return;
+
+      const targetCategory = document.getElementById('scanTargetCategory') ? 
+                             document.getElementById('scanTargetCategory').value : '';
+
+      const itemsToAdd = [];
+      selectedScannedIndices.forEach(idx => {
+        const dev = scannedDevices[idx];
+        if (dev) {
+          itemsToAdd.push({
+            name: dev.name,
+            url: dev.url,
+            subtitle: dev.subtitle || dev.url,
+            icon: dev.icon || 'globe',
+            color: dev.color || '#3b82f6',
+            new_tab: true,
+            category: targetCategory || null
+          });
+        }
+      });
+
+      const btn = document.getElementById('addSelectedBtn');
+      btn.disabled = true;
+      btn.textContent = 'Importazione in corso...';
+
+      try {
+        const resp = await fetch('/api/links/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: itemsToAdd, category: targetCategory })
+        });
+
+        if (resp.ok) {
+          closeScanModal();
+          await reloadServices();
+          refreshStatus();
+        } else {
+          const err = await resp.json();
+          alert('Errore importazione: ' + (err.error || 'Errore sconosciuto'));
+          btn.disabled = false;
+          btn.textContent = `Aggiungi Selezionati (${selectedScannedIndices.size})`;
+        }
+      } catch (err) {
+        alert('Errore di comunicazione con il server');
+        btn.disabled = false;
+        btn.textContent = `Aggiungi Selezionati (${selectedScannedIndices.size})`;
+      }
+    }
+
+    async function addSingleScannedDevice(idx, btn) {
+      const dev = scannedDevices[idx];
+      if (!dev) return;
+
+      const targetCategory = document.getElementById('scanTargetCategory') ? 
+                             document.getElementById('scanTargetCategory').value : '';
+
       btn.disabled = true;
       btn.textContent = 'Salvataggio...';
 
       try {
         const payload = {
-          name: device.name,
-          url: device.url,
-          subtitle: device.subtitle || device.url,
-          icon: device.icon || 'globe',
-          color: device.color || '#3b82f6',
-          new_tab: true
+          name: dev.name,
+          url: dev.url,
+          subtitle: dev.subtitle || dev.url,
+          icon: dev.icon || 'globe',
+          color: dev.color || '#3b82f6',
+          new_tab: true,
+          category: targetCategory || null
         };
 
         const resp = await fetch('/api/links', {
@@ -1372,11 +2235,11 @@
         });
 
         if (resp.ok) {
-          btn.outerHTML = '<span style="color:var(--status-online); font-size:0.8rem; font-weight:600;">Aggiunto ✓</span>';
-          // Ricarica la pagina come richiesto
-          window.location.reload();
+          btn.outerHTML = '<span style="color:var(--status-online); font-size:0.78rem; font-weight:600;">Aggiunto ✓</span>';
+          await reloadServices();
+          refreshStatus();
         } else {
-          alert('Errore durante il salvataggio del servizio');
+          alert('Errore salvataggio servizio');
           btn.disabled = false;
           btn.textContent = '+ Aggiungi';
         }
@@ -1388,19 +2251,88 @@
     }
 
     // ==========================================
-    // OPERAZIONI CRUD SERVIZI
+    // MODALE AGGIUNGI / MODIFICA SERVIZIO
     // ==========================================
+
+    function updateCategoryDropdown(selectedCategory = '') {
+      const select = document.getElementById('serviceCategory');
+      let html = `<option value="">🏠 Home (Nessuna cartella)</option>`;
+      
+      categories.forEach(c => {
+        const isSel = c.name === selectedCategory ? 'selected' : '';
+        html += `<option value="${escapeHtml(c.name)}" ${isSel}>📁 ${escapeHtml(c.name)}</option>`;
+      });
+
+      html += `<option value="__NEW__">➕ Crea nuova cartella...</option>`;
+      select.innerHTML = html;
+      document.getElementById('newCategoryInput').style.display = 'none';
+      document.getElementById('newCategoryInput').value = '';
+    }
+
+    function onCategorySelectChange(val) {
+      const input = document.getElementById('newCategoryInput');
+      if (val === '__NEW__') {
+        input.style.display = 'block';
+        input.focus();
+      } else {
+        input.style.display = 'none';
+      }
+    }
+
+    function openAddModal(preselectedCategory = '') {
+      document.getElementById('modalTitle').textContent = preselectedCategory ? `Aggiungi Servizio a "${preselectedCategory}"` : 'Aggiungi Servizio';
+      document.getElementById('serviceId').value = '';
+      document.getElementById('serviceName').value = '';
+      document.getElementById('serviceUrl').value = '';
+      document.getElementById('serviceSubtitle').value = '';
+      document.getElementById('serviceNewTab').checked = true;
+      
+      updateCategoryDropdown(preselectedCategory);
+      selectIcon('globe');
+      selectColor('#3b82f6');
+      document.getElementById('serviceModal').classList.add('open');
+      setTimeout(() => document.getElementById('serviceName').focus(), 50);
+    }
+
+    function openEditModal(sid) {
+      const item = services.find(s => s.id === sid);
+      if (!item) return;
+
+      document.getElementById('modalTitle').textContent = 'Modifica Servizio';
+      document.getElementById('serviceId').value = item.id;
+      document.getElementById('serviceName').value = item.name || '';
+      document.getElementById('serviceUrl').value = item.url || '';
+      document.getElementById('serviceSubtitle').value = item.subtitle || '';
+      document.getElementById('serviceNewTab').checked = item.new_tab !== false;
+      
+      updateCategoryDropdown(item.category || '');
+      selectIcon(item.icon || 'globe');
+      selectColor(item.color || '#3b82f6');
+      document.getElementById('serviceModal').classList.add('open');
+      setTimeout(() => document.getElementById('serviceName').focus(), 50);
+    }
+
+    function closeModal() {
+      document.getElementById('serviceModal').classList.remove('open');
+    }
 
     async function handleFormSubmit(e) {
       e.preventDefault();
       const id = document.getElementById('serviceId').value;
+      const catSelect = document.getElementById('serviceCategory').value;
+      let finalCategory = catSelect;
+      if (catSelect === '__NEW__') {
+        finalCategory = document.getElementById('newCategoryInput').value.trim();
+      }
+
       const payload = {
         name: document.getElementById('serviceName').value.trim(),
         url: document.getElementById('serviceUrl').value.trim(),
         subtitle: document.getElementById('serviceSubtitle').value.trim(),
         icon: selectedIcon,
         color: selectedColor,
-        new_tab: document.getElementById('serviceNewTab').checked
+        new_tab: document.getElementById('serviceNewTab').checked,
+        category: finalCategory || null
       };
 
       const btn = document.getElementById('saveBtn');
@@ -1425,6 +2357,9 @@
         if (resp.ok) {
           closeModal();
           await reloadServices();
+          if (currentOpenFolder) {
+            openFolderModal(currentOpenFolder);
+          }
           refreshStatus();
         } else {
           const err = await resp.json();
@@ -1445,35 +2380,14 @@
         const resp = await fetch(`/api/links/${sid}`, { method: 'DELETE' });
         if (resp.ok) {
           await reloadServices();
+          if (currentOpenFolder) {
+            openFolderModal(currentOpenFolder);
+          }
         } else {
           alert('Impossibile eliminare il servizio');
         }
       } catch (err) {
-        alert('Errore di comunicazione con il server');
-      }
-    }
-
-    async function moveService(sid, direction) {
-      const index = services.findIndex(s => s.id === sid);
-      if (index < 0) return;
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= services.length) return;
-
-      const order = [...services];
-      const [moved] = order.splice(index, 1);
-      order.splice(targetIndex, 0, moved);
-
-      services = order;
-      renderServices(document.getElementById('searchInput').value);
-
-      try {
-        await fetch('/api/links/reorder', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order: services.map(s => s.id) })
-        });
-      } catch (err) {
-        console.error('Reorder error:', err);
+        alert('Errore di comunicazione');
       }
     }
 
@@ -1483,6 +2397,8 @@
         if (resp.ok) {
           const data = await resp.json();
           services = data.services || [];
+          categories = data.categories || [];
+          rootOrder = data.root_order || rootOrder;
           if (data.title) {
             document.getElementById('dashboardTitle').textContent = data.title;
             document.title = data.title;
@@ -1509,7 +2425,7 @@
             document.title = next.trim();
           }
         } catch (err) {
-          alert('Errore durante il salvataggio del titolo');
+          alert('Errore salvataggio titolo');
         }
       }
     }
@@ -1541,6 +2457,53 @@
       } finally {
         event.target.value = '';
       }
+    }
+
+    function initIconAndColorPickers() {
+      const grid = document.getElementById('iconPickerGrid');
+      grid.innerHTML = Object.keys(ICONS).map(k => `
+        <div class="icon-choice ${k === selectedIcon ? 'selected' : ''}" data-icon="${k}" onclick="selectIcon('${k}')" title="${k}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICONS[k]}</svg>
+        </div>
+      `).join('');
+
+      const colorsEl = document.getElementById('colorPresets');
+      colorsEl.innerHTML = COLORS.map(c => `
+        <div class="color-swatch ${c === selectedColor ? 'selected' : ''}" style="background: ${c};" onclick="selectColor('${c}')"></div>
+      `).join('');
+    }
+
+    function selectIcon(iconKey) {
+      selectedIcon = iconKey;
+      document.getElementById('customIconInput').value = iconKey;
+      document.querySelectorAll('#iconPickerGrid .icon-choice').forEach(el => {
+        el.classList.toggle('selected', el.getAttribute('data-icon') === iconKey);
+      });
+      updateIconPreview();
+    }
+
+    function onCustomIconInput(val) {
+      selectedIcon = val.trim() || 'globe';
+      document.querySelectorAll('#iconPickerGrid .icon-choice').forEach(el => {
+        el.classList.toggle('selected', el.getAttribute('data-icon') === selectedIcon);
+      });
+      updateIconPreview();
+    }
+
+    function selectColor(colorHex) {
+      selectedColor = colorHex;
+      document.getElementById('serviceColor').value = colorHex;
+      document.querySelectorAll('#colorPresets .color-swatch').forEach(el => {
+        el.classList.toggle('selected', el.style.backgroundColor === colorHex || el.style.background === colorHex);
+      });
+      updateIconPreview();
+    }
+
+    function updateIconPreview() {
+      const preview = document.getElementById('iconPreview');
+      preview.style.borderColor = selectedColor + '44';
+      preview.style.background = selectedColor + '20';
+      preview.innerHTML = renderIcon(selectedIcon, selectedColor);
     }
 
     function escapeHtml(str) {
